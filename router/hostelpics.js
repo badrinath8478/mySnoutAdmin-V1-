@@ -1,44 +1,39 @@
-
 const express = require("express");
 const router = express.Router();
 const multer = require('multer');
 const imageController = require('../controller/hostelpics');
-const path = require('path');
+const isAuth = require('../middleware/auth');
 
-const newLocal = './public/files';
-/** Storage Engine */
-const storageEngine = multer.diskStorage({
-  destination: newLocal,
-  filename: function(req, file, fn){
-    fn(null,  new Date().getTime().toString()+'-'+file.fieldname+path.extname(file.originalname));
+const FILE_TYPE_MAP = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg'
   }
-}); 
-//init
-var upload =  multer({
-  storage: storageEngine,
-  limits: { fileSize:200000 },
-  fileFilter: function(req, file, callback){
-    validateFile(file, callback);
-  }
-});
-var validateFile = function(file, cb ){
-  allowedFileTypes = /jpeg|jpg|png|gif/;
-  const extension = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimeType  = allowedFileTypes.test(file.mimetype);
-  if(extension && mimeType){
-    return cb(null, true);
-  }else{
-    cb("Invalid file type. Only JPEG, PNG and GIF file are allowed.")
-  }
-}
-// router.get("/", imageController.products_get_all);
+  const storageEngine = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const isValid = FILE_TYPE_MAP[file.mimetype];
+      let uploadError = new Error('invalid image type');
+  
+      if (isValid) {
+        uploadError = null
+      }
+      cb(uploadError, 'public/files')
+    },
+    filename: function (req, file, cb) {
+  
+      const extension = FILE_TYPE_MAP[file.mimetype];
+      cb(null, `${Date.now()}.${extension}`)
+    }
+  })
+  var upload = multer({ storage: storageEngine })
+  var cpUpload = upload.fields([{ name: 'hostelImages', maxCount: 10, minCount: 6}, { name: 'menuPics', maxCount: 2 }, { name: 'kitchenPics', maxCount: 5,minCount : 3 }])
+  
+  
 
-router.post("/", upload.array('Image'), imageController.products_create_product);
+router.post("/",isAuth, cpUpload, imageController.create_images);
 
-// router.get("/:productId", imageController.products_get_product);
 
-// router.patch("/:productId", imageController.products_update_product);
+router.put("/",isAuth, cpUpload,imageController.update_images);
 
-// router.delete("/:productId",  imageController.products_delete);
 
 module.exports = router;

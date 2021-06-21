@@ -1,130 +1,118 @@
-
 const mongoose = require("mongoose");
+const hosteldetails = require("../model/hosteldetails");
 const RoomsAvailable = require("../model/roomsavailable");
 
-
 exports.roomsAvailable_post = (req, res, next) => {
-  const roomsAvailable = new RoomsAvailable({
-    _id: new mongoose.Types.ObjectId(),
-    no_of_people_per_room : req.body.no_of_people_per_room,
-    room_type : req.body.room_type,
-    price : req.body.price,
-    rooms_available : req.body.rooms_available,
-    roomSize: req.body.roomSize
-    });
-  roomsAvailable.save()
-  .then(result => {
-    console.log(result);
-    res.status(201).json({
-      message:"sucess",
-      result : result
-    });
-  }).catch(err => {
-    console.log(err);
-    res.status(500).json({
-      error: err
-    });
+  hosteldetails.findOne({ admin: req.adminId }, (err, result) => {
+    if (err) throw err;
+    if (!result.roomsAvailable) {
+      const roomsAvailable = new RoomsAvailable({
+        _id: new mongoose.Types.ObjectId(),
+        rooms: {
+          _id: new mongoose.Types.ObjectId(),
+          name: req.body.name,
+          peoplePerRoom: req.body.peoplePerRoom,
+          roomType: req.body.roomType,
+          price: req.body.price,
+          roomsAvailable: req.body.roomsAvailable,
+          roomSize: req.body.roomSize,
+          washroomsPerRoom: req.body.washroomsPerRoom,
+        },
+      });
+      roomsAvailable.save().then((rooms) => {
+        hosteldetails.findOne({ admin: req.adminId }, (err, result) => {
+          if (err) throw err;
+          if (result) {
+            result.roomsAvailable = roomsAvailable._id;
+            res.status(201).json({ success: rooms });
+          }
+          return result.save();
+        });
+      });
+    } else {
+      hosteldetails.findOne({ admin: req.adminId }, (err, result) => {
+        if (err) throw err;
+        if (result) {
+          RoomsAvailable.findOne(
+            { _id: result.roomsAvailable },
+            (err, respons) => {
+              if (err) throw err;
+              if (respons) {
+                respons.rooms.push({
+                  _id: new mongoose.Types.ObjectId(),
+                  name: req.body.name,
+                  peoplePerRoom: req.body.peoplePerRoom,
+                  roomType: req.body.roomType,
+                  price: req.body.price,
+                  roomsAvailable: req.body.roomsAvailable,
+                  roomSize: req.body.roomSize,
+                  washroomsPerRoom: req.body.washroomsPerRoom,
+                });
+                respons.save().then((rooms) => {
+                  return res.status(201).json({ success: rooms });
+                });
+              } else {
+                return res.status(500).json({ error: "err" });
+              }
+            }
+          );
+        }
+      });
+    }
   });
 };
 
 
-// exports.ac_get_all = (req, res, next) => {
-//   Ac.find()
-//     .select("no_of_people_per_room _id ")
-//     .exec()
-//     .then(docs => {
-//       const response = {
-//         count: docs.length,
-//         ac : docs.map(doc => {
-//           return {
-//             ac: doc.ac,
-//            _id: doc._id,
-            
-//           };
-//         })
-//       };
-//       if (docs.length >= 0) {
-//         res.status(200).json(response);
-//       } else {
-//         res.status(404).json({
-//           message: 'No entries found'
-//         });
-//       }
-//     })
-//     .catch(err => {
-//       console.log(err);
-//       res.status(500).json({
-//         error: err
-//       });
-//     });
-// };
 
-
-
-exports.roomsAvailable_get = (req, res, next) => {
-    const id = req.params.roomsAvailableId;
-    RoomsAvailable.findById(id)
-      .select(" _id  ")
-      .exec()
-      .then(doc => {
-        console.log(doc);
-        if (doc) {
-          res.status(200).json({
-            ac : doc.ac,
-            fan: doc.fan,
-          });
-        } else {
-          res
-            .status(404)
-            .json({ message: "No valid entry found for provided ID" });
+exports.roomsAvailable_delete = (req, res, next) => {
+  hosteldetails.findOne({ admin: req.adminId }, (err, details) => {
+    if (err) throw err;
+    if (details) {
+      RoomsAvailable.findOneAndUpdate(
+        { _id: details.roomsAvailable },
+        { $pull: { rooms: { _id: req.params.roomId } } },
+        { new: true },
+        (err, result) => {
+          if (err) throw err;
+          if (result) {
+            res.status(201).json({ success: process.env.POST_DELETED });
+          }
         }
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(500).json({ error: err });
-      });
-  };
-  
-  
-  
-  
-  
-  exports.roomsAvailable_delete = (req, res, next) => {
-    const id = req.params.roomsAvailableId;
-    RoomsAvailable.remove({ _id: id })
-    .exec()
-    .then(result => {
-      res.status(200).json({
-        message: " deleted"
-      });
-    })
-    .catch(err => {
-      console.log(err);
-      res.status(500).json({
-        error: err
-      });
-    });
-  };
-  
- 
-  exports.roomsAvailable_put = (req, res, next) => {
-    id = req.params.roomsAvailableId;
-    RoomsAvailable.findById(id)
-      .then(post => {
-        console.log(post);
-        post.no_of_people_per_room = req.body.no_of_people_per_room;
-        post.room_type = req.body.room_type;
-        post.price = req.body.price;
-        post.rooms_available = req.body.rooms_available;
-        post.roomSize = req.body.roomSize;
-        return post.save();
-      })
-      .then(result => {
-        console.log(result);
-        res.status(200).json({ message: 'Post updated!', updated_post: result });
-      })
-      .catch(err => {
-        console.log(err);
-        res.status(500).json({ error: err });
-      });
-  };
+      );
+    }
+  });
+};
+
+
+
+exports.roomsAvailable_put = (req, res, next) => {
+  const id = req.params.roomId;
+  hosteldetails.findOne({ admin: req.adminId }, (err, details) => {
+    if (err) throw err;
+    if (details) {
+      RoomsAvailable.updateOne(
+        {
+          _id: details.roomsAvailable,
+          "rooms._id": id,
+        },
+        {
+          $set: {
+            "rooms.$.name": req.body.name,
+            "rooms.$.peoplePerRoom": req.body.peoplePerRoom,
+            "rooms.$.roomType": req.body.roomType,
+            "rooms.$.price": req.body.price,
+            "rooms.$.roomsAvailable": req.body.roomsAvailable,
+            "rooms.$.roomSize": req.body.roomSize,
+            "rooms.$.washroomsPerRoom": req.body.washroomsPerRoom,
+          },
+        },
+        { new: true },
+        (err, result) => {
+          if (result) {
+            res.status(201).json({ result: process.env.POST_UPDATED });
+          }
+        }
+      );
+    }
+  });
+};

@@ -1,16 +1,19 @@
-const mongoose = require('mongoose');
-
+const mongoose = require("mongoose");
 
 const roomsAvailableSchema = mongoose.Schema({
-     __id: mongoose.Schema.Types.ObjectId,
-
-     no_of_people_per_room: { type: Number, require: true },
-     room_type: { type: String, require: true },
-     price: { type: Number, require: true },
-     rooms_available: { type: Number, require: true },
-     roomSize: { type: Number, require: true }
-
-
+  _id: mongoose.Schema.Types.ObjectId,
+  rooms: [
+    {
+      _id: mongoose.Schema.Types.ObjectId,
+      peoplePerRoom: { type: Number, require: true },
+      name: { type: String, require: true ,unique:false},
+      roomType: { type: String, require: true },
+      price: { type: Number, require: true },
+      roomsAvailable: { type: Number, require: true },
+      roomSize: { type: Number, require: true },
+      washroomsPerRoom: { type: Number, require: true },
+    },
+  ],
 });
 
-module.exports = mongoose.model('RoomsAvailable', roomsAvailableSchema);
+module.exports = mongoose.model("RoomsAvailable", roomsAvailableSchema);

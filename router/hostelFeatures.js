@@ -1,12 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const HostelFeaturesController = require('../controller/hostelFeatures');
+const isAuth = require('../middleware/auth');
 
+router.post("/",isAuth,HostelFeaturesController.HostelFeatures_post);
 
-router.post("/",HostelFeaturesController.HostelFeatures_post);
-router.get("/:HostelFeaturesId",HostelFeaturesController.HostelFeatures_get);
-router.delete("/:HostelFeaturesId",HostelFeaturesController.HostelFeatures_delete);
-router.put("/:HostelFeaturesId",HostelFeaturesController.HostelFeatures_put);
+router.put("/",isAuth,HostelFeaturesController.HostelFeatures_put);
 
 
 module.exports = router;

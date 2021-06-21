@@ -1,15 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const HostelController = require("../controller/hosteldetails");
+const isAuth = require('../middleware/auth');
 
 
-router.post("/",HostelController.hostel_post);
 
-router.get("/:hosteldetailsId",HostelController.hosteldetails_get);
 
-router.put("/:hosteldetailsId",HostelController.hosteldetails_put);
+router.post("/",isAuth ,HostelController.Hosteldetails_post);
 
-router.delete("/:hosteldetailsId",HostelController.hosteldetails_delete);
+
+
+
+router.get("/", isAuth,HostelController.Hosteldetails_get);
+
+
+
+
+router.put("/", isAuth, HostelController.Hosteldetails_put);
 
 
 

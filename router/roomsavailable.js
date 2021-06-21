@@ -2,12 +2,17 @@ const express = require("express");
 const router = express.Router();
 const roomsAvailableController = require('../controller/roomsavailable');
 
+const isAuth = require('../middleware/auth');
 
-router.post("/",roomsAvailableController.roomsAvailable_post);
 
-router.get("/:roomsAvailableId",roomsAvailableController.roomsAvailable_get);
 
-router.delete("/:roomsAvailableId",roomsAvailableController.roomsAvailable_delete);
+router.post("/",isAuth, roomsAvailableController.roomsAvailable_post);
 
-router.put("/:roomsAvailableId",roomsAvailableController.roomsAvailable_put);
+
+
+router.delete("/:roomId",isAuth, roomsAvailableController.roomsAvailable_delete);
+
+router.put("/:roomId",isAuth, roomsAvailableController.roomsAvailable_put);
+
+
 module.exports = router;
